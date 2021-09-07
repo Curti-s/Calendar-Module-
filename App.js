@@ -6,7 +6,7 @@
  * @flow strict-local
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import type {Node} from 'react';
 import {
   SafeAreaView,
@@ -16,6 +16,8 @@ import {
   Text,
   useColorScheme,
   View,
+  NativeEventEmitter,
+  Button,
 } from 'react-native';
 
 import {
@@ -25,6 +27,7 @@ import {
   LearnMoreLinks,
   ReloadInstructions,
 } from 'react-native/Libraries/NewAppScreen';
+import CalendarModule from './CalendarModule';
 
 const Section = ({children, title}): Node => {
   const isDarkMode = useColorScheme() === 'dark';
@@ -52,8 +55,32 @@ const Section = ({children, title}): Node => {
   );
 };
 
+
+const NewModuleButton = () => {
+
+  const onPress = () => {
+    console.log('executing native module');
+    CalendarModule.createCalendarEvent('testname', 'testLocation', eventId => console.log(`Event Id: ${eventId}`));
+
+    const { DEFAULT_EVENT_NAME } = CalendarModule.getConstants();
+    console.log("Default event_name ", DEFAULT_EVENT_NAME);
+    // console.log('fire event reminder', CalendarModule.eventReminder());
+  }
+
+  return <Button title="Native Module button" onPress={onPress} color="#841584" />;
+}
+
 const App: () => Node = () => {
   const isDarkMode = useColorScheme() === 'dark';
+
+  useEffect(() => {
+    const eventEmitter = new NativeEventEmitter(CalendarModule);
+    const listener = eventEmitter.addListener('EventReminder', event => {
+      console.log('...', event.eventProperty);
+    });
+
+    return listener.remove();
+  }, []);
 
   const backgroundStyle = {
     backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
@@ -66,6 +93,7 @@ const App: () => Node = () => {
         contentInsetAdjustmentBehavior="automatic"
         style={backgroundStyle}>
         <Header />
+        <NewModuleButton />
         <View
           style={{
             backgroundColor: isDarkMode ? Colors.black : Colors.white,
